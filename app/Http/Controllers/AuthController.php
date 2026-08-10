@@ -8,13 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /**
-     * Đăng nhập
-     *
-     * Mỗi thiết bị sẽ có 1 token riêng.
-     * Đăng nhập máy mới KHÔNG logout máy cũ.
-     */
-    public function login(Request $request)
+    public function loginAdmin(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
@@ -50,7 +44,59 @@ class AuthController extends Controller
     }
 
     /**
+     * Đăng nhập bằng userName
+     *
+     * POST /api/client/login
+     *
+     * Mỗi thiết bị sẽ có 1 token riêng.
+     * Đăng nhập máy mới KHÔNG logout máy cũ.
+     */
+    public function login(Request $request)
+    {
+        $request->validate([
+            'userName' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('userName', $request->userName)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tên đăng nhập hoặc mật khẩu không chính xác.',
+            ], 401);
+        }
+
+        // Không xóa token cũ
+        // Cho phép tài khoản đăng nhập nhiều thiết bị
+        $token = $user->createToken(
+            $user->role === 'admin'
+                ? 'AdminToken'
+                : 'CustomerToken'
+        )->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đăng nhập thành công!',
+            'data' => [
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'user' => [
+                    'id' => $user->id,
+                    'userName' => $user->userName,
+                    'role' => $user->role,
+                    'balance' => $user->balance,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                ],
+            ],
+        ]);
+    }
+
+    /**
      * Đăng xuất thiết bị hiện tại
+     *
+     * POST /api/client/logout
      */
     public function logout(Request $request)
     {
@@ -68,12 +114,21 @@ class AuthController extends Controller
 
     /**
      * Thông tin tài khoản hiện tại
+     *
+     * GET /api/client/profile
      */
     public function profile(Request $request)
     {
         return response()->json([
             'success' => true,
-            'data' => $request->user(),
+            'data' => [
+                'id' => $request->user()->id,
+                'userName' => $request->user()->userName,
+                'role' => $request->user()->role,
+                'balance' => $request->user()->balance,
+                'created_at' => $request->user()->created_at,
+                'updated_at' => $request->user()->updated_at,
+            ],
         ]);
     }
 }

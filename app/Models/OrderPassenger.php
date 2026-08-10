@@ -13,6 +13,7 @@ class OrderPassenger extends Model
         'passenger_type',
         'document_type',
         'document_number',
+        'date_of_birth',
     ];
 
     public function order(): BelongsTo

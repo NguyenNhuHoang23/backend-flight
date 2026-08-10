@@ -44,6 +44,9 @@ return new class extends Migration
 
             $table->string('full_name');
 
+            $table->date('date_of_birth')
+                ->nullable();
+                
             $table->string('passenger_type', 30)
                 ->default('adult');
 

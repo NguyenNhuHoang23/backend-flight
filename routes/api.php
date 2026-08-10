@@ -7,18 +7,22 @@
     use App\Http\Controllers\Api\BankController;
     use App\Http\Controllers\AccountController;
     use App\Http\Controllers\Api\RefundController;
-use App\Http\Controllers\Api\InfoController;
+    use App\Http\Controllers\Api\InfoController;
 
     Route::post('/login', [
         AuthController::class,
         'login'
     ]);
-        Route::get('/info', [InfoController::class, 'show']);
+    Route::post('/login-admin', [
+        AuthController::class,
+        'loginAdmin'
+    ]);
+    Route::get('/info', [InfoController::class, 'show']);
 
     Route::prefix('admin')->group(function () {
-        Route::post('/login', [
+        Route::post('/login-admin', [
             AuthController::class,
-            'login'
+            'loginAdmin'
         ]);
         Route::post('/orders', [OrderController::class, 'store']);
         Route::patch('/orders/{id}', [OrderController::class, 'update']);

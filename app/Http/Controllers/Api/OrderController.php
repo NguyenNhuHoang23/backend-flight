@@ -132,45 +132,44 @@ class OrderController extends Controller
     }
 
     public function show($id)
-{
-    try {
-        // Tìm theo order_code hoặc id
-        $order = Order::with([
-            'passengers',
-            'flights',
-        ])
-        ->where('order_code', $id)
-        ->orWhere('id', $id)
-        ->first();
+    {
+        try {
+            // Tìm theo order_code hoặc id
+            $order = Order::with([
+                'passengers',
+                'flights',
+            ])
+                ->where('order_code', $id)
+                ->orWhere('id', $id)
+                ->first();
 
-        if (!$order) {
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy đơn hàng',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lấy chi tiết đơn hàng thành công',
+                'data' => $order,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Get order detail error', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy đơn hàng',
-            ], 404);
+                'message' => 'Không thể lấy chi tiết đơn hàng',
+                'error' => config('app.debug')
+                    ? $e->getMessage()
+                    : null,
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Lấy chi tiết đơn hàng thành công',
-            'data' => $order,
-        ], 200);
-
-    } catch (\Throwable $e) {
-        Log::error('Get order detail error', [
-            'id' => $id,
-            'error' => $e->getMessage(),
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Không thể lấy chi tiết đơn hàng',
-            'error' => config('app.debug')
-                ? $e->getMessage()
-                : null,
-        ], 500);
     }
-}
 
     public function store(Request $request)
     {
@@ -261,6 +260,10 @@ class OrderController extends Controller
                 'nullable',
                 'string',
                 'max:100',
+            ],
+            'passengers.*.date_of_birth' => [
+                'nullable',
+                'date',
             ],
 
             /*
@@ -396,11 +399,15 @@ class OrderController extends Controller
                         'passenger_type' =>
                         $passenger['passenger_type'] ?? 'adult',
 
+                        'date_of_birth' =>
+                        $passenger['date_of_birth'] ?? null,
+
                         'document_type' =>
                         $passenger['document_type'] ?? null,
 
                         'document_number' =>
                         $passenger['document_number'] ?? null,
+
                     ]);
                 }
 

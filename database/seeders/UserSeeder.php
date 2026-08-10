@@ -14,7 +14,7 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'admin@example.com'], // Kiểm tra trùng lặp theo email
             [
-                'name' => 'Administrator',
+                'userName' => 'admin',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('12345678'), // Mật khẩu mặc định
                 // Nếu bảng users có cột phân quyền (ví dụ: role hoặc is_admin), hãy bật dòng phù hợp:
@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'client@example.com'],
             [
-                'name' => 'Client User',
+                'userName' => 'client',
                 'email' => 'client@example.com',
                 'password' => Hash::make('12345678'),
                 // 'role' => 'client',

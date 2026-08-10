@@ -41,9 +41,6 @@ return new class extends Migration
                 'rejected',
             ])->default('pending');
 
-            // Ghi chú của admin nếu cần
-            $table->text('admin_note')->nullable();
-
             // Thời gian duyệt / từ chối
             $table->timestamp('processed_at')->nullable();
 

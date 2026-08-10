@@ -19,8 +19,7 @@ class AccountController extends Controller
         $query = User::query()
             ->select([
                 'id',
-                'name',
-                'email',
+                'userName',
                 'role',
                 'balance',
                 'created_at',
@@ -31,15 +30,16 @@ class AccountController extends Controller
         /**
          * Tìm kiếm
          *
-         * ?search=nguyen
+         * ?search=client
          */
         if ($request->filled('search')) {
             $search = $request->search;
 
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
+            $query->where(
+                'userName',
+                'like',
+                "%{$search}%"
+            );
         }
 
         /**
@@ -69,6 +69,21 @@ class AccountController extends Controller
 
         $users = $query->paginate($perPage);
 
+        /*
+         * Đổi userName của DB thành username
+         * để frontend không cần thay đổi.
+         */
+        $users->getCollection()->transform(function ($user) {
+            return [
+                'id' => $user->id,
+                'username' => $user->userName,
+                'role' => $user->role,
+                'balance' => $user->balance,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'message' => 'Lấy danh sách tài khoản thành công.',
@@ -84,24 +99,20 @@ class AccountController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => [
+            /*
+             * Frontend vẫn gửi username
+             */
+            'username' => [
                 'required',
                 'string',
                 'max:255',
-            ],
-
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                'unique:users,email',
+                'unique:users,userName',
             ],
 
             'password' => [
                 'required',
                 'string',
                 'min:6',
-                'confirmed',
             ],
 
             'role' => [
@@ -119,12 +130,17 @@ class AccountController extends Controller
         $role = $validated['role'] ?? 'customer';
 
         $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            /*
+             * Map username -> userName
+             */
+            'userName' => $validated['username'],
+
+            'password' => Hash::make(
+                $validated['password']
+            ),
+
             'role' => $role,
 
-            // Số dư ban đầu
             'balance' => $validated['balance'] ?? 0,
         ]);
 
@@ -133,8 +149,7 @@ class AccountController extends Controller
             'message' => 'Tạo tài khoản thành công.',
             'data' => [
                 'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
+                'username' => $user->userName,
                 'role' => $user->role,
                 'balance' => $user->balance,
                 'created_at' => $user->created_at,
@@ -151,14 +166,14 @@ class AccountController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $user->only([
-                'id',
-                'name',
-                'email',
-                'role',
-                'created_at',
-                'updated_at',
-            ]),
+            'data' => [
+                'id' => $user->id,
+                'username' => $user->userName,
+                'role' => $user->role,
+                'balance' => $user->balance,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ],
         ]);
     }
 
@@ -170,48 +185,48 @@ class AccountController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name' => [
+            'username' => [
                 'sometimes',
                 'required',
                 'string',
                 'max:255',
-            ],
-
-            'email' => [
-                'sometimes',
-                'required',
-                'email',
-                'max:255',
-                'unique:users,email,' . $user->id,
+                'unique:users,userName,' . $user->id,
             ],
 
             'password' => [
                 'nullable',
                 'string',
                 'min:6',
-                'confirmed',
             ],
 
             'role' => [
                 'sometimes',
                 Rule::in(['admin', 'customer']),
             ],
+
+            'balance' => [
+                'sometimes',
+                'numeric',
+                'min:0',
+            ],
         ]);
 
-        if (isset($validated['name'])) {
-            $user->name = $validated['name'];
-        }
-
-        if (isset($validated['email'])) {
-            $user->email = $validated['email'];
+        if (isset($validated['username'])) {
+            $user->userName = $validated['username'];
         }
 
         if (isset($validated['role'])) {
             $user->role = $validated['role'];
         }
 
+        if (isset($validated['balance'])) {
+            $user->balance = $validated['balance'];
+        }
+
         if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
+            $user->password = Hash::make(
+                $validated['password']
+            );
         }
 
         $user->save();
@@ -219,14 +234,14 @@ class AccountController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật tài khoản thành công.',
-            'data' => $user->only([
-                'id',
-                'name',
-                'email',
-                'role',
-                'created_at',
-                'updated_at',
-            ]),
+            'data' => [
+                'id' => $user->id,
+                'username' => $user->userName,
+                'role' => $user->role,
+                'balance' => $user->balance,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ],
         ]);
     }
 

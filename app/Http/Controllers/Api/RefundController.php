@@ -79,11 +79,6 @@ class RefundController extends Controller
                 'nullable',
                 'in:AM,PM',
             ],
-
-            'note' => [
-                'nullable',
-                'string',
-            ],
         ]);
 
         try {
@@ -111,8 +106,6 @@ class RefundController extends Controller
 
                     'ampm' => $validated['ampm']
                         ?? (now()->format('H') >= 12 ? 'PM' : 'AM'),
-
-                    'note' => $validated['note'] ?? null,
 
                     'status' => 'pending',
                 ]);
