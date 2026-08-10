@@ -131,6 +131,47 @@ class OrderController extends Controller
         }
     }
 
+    public function show($id)
+{
+    try {
+        // Tìm theo order_code hoặc id
+        $order = Order::with([
+            'passengers',
+            'flights',
+        ])
+        ->where('order_code', $id)
+        ->orWhere('id', $id)
+        ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy đơn hàng',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lấy chi tiết đơn hàng thành công',
+            'data' => $order,
+        ], 200);
+
+    } catch (\Throwable $e) {
+        Log::error('Get order detail error', [
+            'id' => $id,
+            'error' => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Không thể lấy chi tiết đơn hàng',
+            'error' => config('app.debug')
+                ? $e->getMessage()
+                : null,
+        ], 500);
+    }
+}
+
     public function store(Request $request)
     {
         $validated = $request->validate([

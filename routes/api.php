@@ -7,11 +7,14 @@
     use App\Http\Controllers\Api\BankController;
     use App\Http\Controllers\AccountController;
     use App\Http\Controllers\Api\RefundController;
+use App\Http\Controllers\Api\InfoController;
 
     Route::post('/login', [
         AuthController::class,
         'login'
     ]);
+        Route::get('/info', [InfoController::class, 'show']);
+
     Route::prefix('admin')->group(function () {
         Route::post('/login', [
             AuthController::class,
@@ -79,8 +82,10 @@
             AuthController::class,
             'logout'
         ]);
+        Route::put('/info', [InfoController::class, 'update']);
         Route::get('/profile', [AuthController::class, 'profile']);
         Route::get('/orders', [OrderController::class, 'index']);
+        Route::get('/orders/{id}', [OrderController::class, 'show']);
         Route::prefix('refunds')->group(function () {
 
             Route::get('/', [RefundController::class, 'index']);
