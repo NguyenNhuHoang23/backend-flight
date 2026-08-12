@@ -18,7 +18,13 @@
         'loginAdmin'
     ]);
     Route::get('/info', [InfoController::class, 'show']);
-
+Route::middleware('auth:sanctum')->group(function () {
+        Route::post(
+        '/admin/refunds/{id}/duplicate',
+        [RefundController::class, 'duplicateForAdmin']
+    );
+    Route::get('/refund/client', [RefundController::class, 'indexClient']);
+});
     Route::prefix('admin')->group(function () {
         Route::post('/login-admin', [
             AuthController::class,
@@ -105,6 +111,7 @@
             Route::post('/{id}/reject', [RefundController::class, 'reject']);
 
             Route::delete('/{id}', [RefundController::class, 'destroy']);
+
         });
         Route::prefix('banks')->group(function () {
             Route::get('/{id}', [BankController::class, 'show']);
