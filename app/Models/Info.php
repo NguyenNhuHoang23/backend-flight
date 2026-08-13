@@ -11,6 +11,7 @@ class Info extends Model
     protected $fillable = [
         'hotline',
         'phone',
+        'email',
         'address',
         'website',
         'facebook',

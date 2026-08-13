@@ -29,6 +29,7 @@ class InfoController extends Controller
         $validated = $request->validate([
             'hotline' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'website' => ['nullable', 'string', 'max:500'],
             'facebook' => ['nullable', 'string', 'max:500'],

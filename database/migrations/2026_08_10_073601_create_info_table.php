@@ -10,18 +10,17 @@ return new class extends Migration
     {
         Schema::create('info', function (Blueprint $table) {
             $table->id();
-
-            // Kênh liên hệ trực tiếp
+        
             $table->string('hotline')->nullable();
             $table->string('phone')->nullable();
+            $table->string('email')->nullable();
             $table->text('address')->nullable();
-
-            // Website & mạng xã hội
+        
             $table->string('website')->nullable();
             $table->text('facebook')->nullable();
             $table->text('zalo')->nullable();
             $table->text('messenger')->nullable();
-
+        
             $table->timestamps();
         });
     }

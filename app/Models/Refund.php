@@ -18,6 +18,7 @@ class Refund extends Model
         'date',
         'time',
         'ampm',
+        'note',
         'status',
     ];
 

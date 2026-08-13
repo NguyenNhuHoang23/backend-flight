@@ -79,6 +79,17 @@ class RefundController extends Controller
                 'nullable',
                 'in:AM,PM',
             ],
+
+            'note' => [
+                'nullable',
+                'string',
+            ],
+
+            'user_id' => [
+                'nullable',
+                'integer',
+                'exists:users,id',
+            ],
         ]);
 
         try {
@@ -93,7 +104,7 @@ class RefundController extends Controller
 
             $refund = DB::transaction(function () use ($validated, $user) {
                 return Refund::create([
-                    'user_id' => $user->id,
+                    'user_id' => $validated['user_id'] ?? $user->id,
 
                     'bank_name' => $validated['bank_name'],
                     'account_holder' => $validated['account_holder'],
@@ -106,6 +117,8 @@ class RefundController extends Controller
 
                     'ampm' => $validated['ampm']
                         ?? (now()->format('H') >= 12 ? 'PM' : 'AM'),
+
+                    'note' => $validated['note'] ?? null,
 
                     'status' => 'pending',
                 ]);
@@ -251,8 +264,15 @@ class RefundController extends Controller
     /**
      * Duyệt refund
      */
-    public function approve(string $id)
+    public function approve(Request $request, string $id)
     {
+        $validated = $request->validate([
+            'note' => [
+                'nullable',
+                'string',
+            ],
+        ]);
+
         try {
             $refund = Refund::find($id);
 
@@ -270,9 +290,10 @@ class RefundController extends Controller
                 ], 422);
             }
 
-            DB::transaction(function () use ($refund) {
+            DB::transaction(function () use ($refund, $validated) {
                 $refund->update([
                     'status' => 'approved',
+                    'note' => $validated['note'] ?? $refund->note,
                 ]);
             });
 
