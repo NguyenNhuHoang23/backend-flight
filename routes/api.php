@@ -96,6 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profile', [AuthController::class, 'profile']);
         Route::get('/orders', [OrderController::class, 'index']);
         Route::get('/orders/{id}', [OrderController::class, 'show']);
+        Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
         Route::prefix('refunds')->group(function () {
 
             Route::get('/', [RefundController::class, 'index']);

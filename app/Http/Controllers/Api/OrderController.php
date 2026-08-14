@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Support\PublicStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
@@ -70,29 +70,14 @@ class OrderController extends Controller
             // PAYMENT BILL IMAGE
             // =========================
             if ($request->hasFile('payment_bill_image')) {
+                PublicStorage::delete($order->getRawOriginal('payment_bill_image'));
 
-                // Xóa ảnh cũ
-                if ($order->payment_bill_image) {
-                    $oldPath = $order->payment_bill_image;
+                $path = PublicStorage::store(
+                    $request->file('payment_bill_image'),
+                    'payment-bills'
+                );
 
-                    // DB đang lưu:
-                    // storage/payment-bills/abc.jpg
-                    if (str_starts_with($oldPath, 'storage/')) {
-                        $oldPath = substr($oldPath, 8);
-                    }
-
-                    if (Storage::disk('public')->exists($oldPath)) {
-                        Storage::disk('public')->delete($oldPath);
-                    }
-                }
-
-                // Upload ảnh mới
-                $path = $request
-                    ->file('payment_bill_image')
-                    ->store('payment-bills', 'public');
-
-                // Lưu vào DB
-                $order->payment_bill_image = 'storage/' . $path;
+                $order->payment_bill_image = $path;
             }
 
             $order->save();
@@ -350,9 +335,10 @@ class OrderController extends Controller
                 $billPath = null;
 
                 if ($request->hasFile('payment_bill_image')) {
-                    $billPath = $request
-                        ->file('payment_bill_image')
-                        ->store('payment-bills', 'public');
+                    $billPath = PublicStorage::store(
+                        $request->file('payment_bill_image'),
+                        'payment-bills'
+                    );
                 }
 
 
@@ -476,6 +462,45 @@ class OrderController extends Controller
                 'message' => 'Không thể tạo đơn hàng',
 
                 'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $order = Order::where('order_code', $id)
+                ->orWhere('id', $id)
+                ->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy đơn hàng',
+                ], 404);
+            }
+
+            DB::transaction(function () use ($order) {
+                PublicStorage::delete($order->getRawOriginal('payment_bill_image'));
+                $order->delete();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Xóa đơn hàng thành công',
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Delete order error', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể xóa đơn hàng',
+                'error' => config('app.debug')
+                    ? $e->getMessage()
+                    : null,
             ], 500);
         }
     }
